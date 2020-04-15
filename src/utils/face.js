@@ -1,15 +1,15 @@
-const { createCanvas, loadImage } = require("canvas");
+// const { createCanvas, loadImage } = require("canvas");
 require("./pico.js");
 /*
   1. load the face-detection cascade
 */
-var facefinder_classify_region = function(r, c, s, pixels, ldim) {
+var facefinder_classify_region = function (r, c, s, pixels, ldim) {
   return -1.0;
 };
 var cascadeurl =
   window.location.origin + window.location.pathname + "facefinder.bin";
-fetch(cascadeurl).then(function(response) {
-  response.arrayBuffer().then(function(buffer) {
+fetch(cascadeurl).then(function (response) {
+  response.arrayBuffer().then(function (buffer) {
     var bytes = new Int8Array(buffer);
     facefinder_classify_region = pico.unpack_cascade(bytes);
     console.log("* facefinder loaded");
@@ -18,14 +18,47 @@ fetch(cascadeurl).then(function(response) {
 /*
   2. prepare the image and canvas context
 */
+// const getImage = async (source) => {
+//   const image = await loadImage(source);
+//   const { width, height } = image;
+//   const canvas = createCanvas(width, height);
+//   const ctx = canvas.getContext("2d");
+//   ctx.drawImage(image, 0, 0);
+//   return { image, ctx };
+// };
 const getImage = async (source) => {
-  const image = await loadImage(source);
-  const { width, height } = image;
-  const canvas = createCanvas(width, height);
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(image, 0, 0);
-  return { image, ctx };
+  return new Promise((resolve, reject) => {
+    let image = new Image();
+    image.src = source;
+    image.onload = () => {
+      let canvas = document.createElement("canvas");
+      canvas.width = image.width;
+      canvas.height = image.height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(image, 0, 0);
+      resolve({ image, ctx })
+    };
+  });
 };
+// const getImage = async (source) => {
+//   return new Promise((resolve, reject) => {
+//     let image = new Image();
+//     let height, width, rgba;
+//     image.src = source;
+//     image.onload = () => {
+//       let b64 = source.slice(source.indexOf(",") + 1);
+//       let str = atob(b64);
+//       let arr = str.split("").map(function (e) {
+//         return e.charCodeAt(0);
+//       });
+//       rgba = new Uint8ClampedArray(arr);
+//       height = image.height
+//       width = image.width
+//       console.log( rgba, height, width )
+//       return { rgba, height, width }
+//     };
+//   });
+// };
 /*
   3. transform an RGBA image to grayscale
 */
@@ -56,14 +89,14 @@ const getDefaultParams = (width, height) => {
   return Object.assign(factor, size);
 };
 
-const draw_frame = async function(det, canvas_id) {
+const draw_frame = async function (det, canvas_id) {
   var ctx = document.getElementById(canvas_id).getContext("2d");
   if (ctx && ctx.canvas) {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   } else {
     return;
   }
-  if(!det) {
+  if (!det) {
     return;
   }
   ctx.beginPath();
@@ -103,6 +136,8 @@ const face_detection = async (img, option, qThreshold = 5.0, IoU = 0.2) => {
   // re-draw the image to clear previous results and get its RGBA pixel data
 
   var rgba = ctx.getImageData(0, 0, width, height).data;
+  // let { rgba, height, width } = await getImage(img);
+
   // prepare input to `run_cascade`
   const imageParams = {
     pixels: rgba_to_grayscale(rgba, height, width),
@@ -126,5 +161,5 @@ const face_detection = async (img, option, qThreshold = 5.0, IoU = 0.2) => {
   }
 };
 
-exports.face_detection = face_detection
-exports.draw_frame = draw_frame
+exports.face_detection = face_detection;
+exports.draw_frame = draw_frame;

@@ -7,7 +7,6 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "canvas": "^2.6.1",
     "core-js": "^3.6.4",
     "vue": "^2.6.11",
     "webcamjs": "^1.0.26"
